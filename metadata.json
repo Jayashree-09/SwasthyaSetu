@@ -1,0 +1,6 @@
+{
+  "name": "SwasthyaSetu — OPD & Smart Token Platform",
+  "description": "AI-Powered Government Hospital OPD, Smart Token & Healthcare Assistance Platform for Karnataka and rural hospitals.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
