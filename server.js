@@ -358,7 +358,12 @@ const db = {
       status: 'CONSULTING',
       bookedAt: new Date(Date.now() - 3600000).toISOString(),
       priority: 'NORMAL',
-      symptoms: 'High fever and body ache since 3 days'
+      symptoms: 'High fever and body ache since 3 days',
+      fee: 10,
+      paymentStatus: 'PAID',
+      paymentMethod: 'UPI',
+      transactionId: 'TXN-GOK-841920',
+      paidAt: new Date(Date.now() - 3600000).toISOString()
     },
     {
       id: 'tok-002',
@@ -379,7 +384,12 @@ const db = {
       status: 'CALLED',
       bookedAt: new Date(Date.now() - 3000000).toISOString(),
       priority: 'NORMAL',
-      symptoms: 'Persistent dry cough and sore throat'
+      symptoms: 'Persistent dry cough and sore throat',
+      fee: 10,
+      paymentStatus: 'PAID',
+      paymentMethod: 'UPI',
+      transactionId: 'TXN-GOK-841921',
+      paidAt: new Date(Date.now() - 3000000).toISOString()
     },
     {
       id: 'tok-003',
@@ -400,7 +410,12 @@ const db = {
       status: 'WAITING',
       bookedAt: new Date(Date.now() - 2400000).toISOString(),
       priority: 'NORMAL',
-      symptoms: 'Diabetes routine checkup and weakness'
+      symptoms: 'Diabetes routine checkup and weakness',
+      fee: 10,
+      paymentStatus: 'PAID',
+      paymentMethod: 'CARD',
+      transactionId: 'TXN-GOK-841922',
+      paidAt: new Date(Date.now() - 2400000).toISOString()
     },
     {
       id: 'tok-004',
@@ -421,7 +436,12 @@ const db = {
       status: 'WAITING',
       bookedAt: new Date(Date.now() - 1800000).toISOString(),
       priority: 'NORMAL',
-      symptoms: 'Severe headache and fatigue'
+      symptoms: 'Severe headache and fatigue',
+      fee: 10,
+      paymentStatus: 'PAY_AT_COUNTER',
+      paymentMethod: 'CASH',
+      transactionId: null,
+      paidAt: null
     },
     {
       id: 'tok-005',
@@ -442,7 +462,12 @@ const db = {
       status: 'WAITING',
       bookedAt: new Date(Date.now() - 1200000).toISOString(),
       priority: 'NORMAL',
-      symptoms: 'Fever and poor appetite in 4-year-old'
+      symptoms: 'Fever and poor appetite in 4-year-old',
+      fee: 0,
+      paymentStatus: 'EXEMPT',
+      paymentMethod: 'ABHA_EXEMPT',
+      transactionId: 'TXN-GOK-ABHA-8419',
+      paidAt: new Date(Date.now() - 1200000).toISOString()
     }
   ],
 
@@ -850,7 +875,12 @@ async function startServer() {
       doctorId,
       slot,
       symptoms,
-      priority
+      priority,
+      fee,
+      paymentStatus,
+      paymentMethod,
+      transactionId,
+      paidAt
     } = req.body;
 
     if (!patientName || !patientPhone || !hospitalId || !departmentId) {
@@ -888,6 +918,13 @@ async function startServer() {
     const nextSeq = deptTokensToday.length + 1;
     const tokenNumber = `${department.code}-${String(nextSeq).padStart(3, '0')}`;
 
+    // Payment calculation
+    const resolvedFee = typeof fee === 'number' ? fee : (fee !== undefined && fee !== null ? Number(fee) : 10);
+    const resolvedStatus = paymentStatus || (resolvedFee === 0 ? 'EXEMPT' : 'PAID');
+    const resolvedMethod = paymentMethod || (resolvedStatus === 'EXEMPT' ? 'ABHA_EXEMPT' : (resolvedStatus === 'PAY_AT_COUNTER' ? 'CASH' : 'UPI'));
+    const resolvedTxn = transactionId || (resolvedStatus === 'PAY_AT_COUNTER' ? null : `TXN-GOK-${Math.floor(100000 + Math.random() * 900000)}`);
+    const resolvedPaidAt = paidAt || (resolvedStatus === 'PAY_AT_COUNTER' ? null : new Date().toISOString());
+
     const newToken = {
       id: 'tok-' + Date.now(),
       tokenNumber,
@@ -907,7 +944,13 @@ async function startServer() {
       status: 'WAITING',
       bookedAt: new Date().toISOString(),
       priority: priority || 'NORMAL',
-      symptoms: symptoms || 'General OPD consultation'
+      symptoms: symptoms || 'General OPD consultation',
+      // OPD Registration Fee & Payment Status
+      fee: resolvedFee,
+      paymentStatus: resolvedStatus,
+      paymentMethod: resolvedMethod,
+      transactionId: resolvedTxn,
+      paidAt: resolvedPaidAt
     };
 
     db.tokens.push(newToken);
@@ -916,7 +959,7 @@ async function startServer() {
     db.auditLogs.unshift({
       id: 'log-' + Date.now(),
       action: 'TOKEN_GENERATED',
-      details: `Token ${tokenNumber} issued to ${patientName} at ${hospital.name} (${department.name})`,
+      details: `Token ${tokenNumber} issued to ${patientName} at ${hospital.name} (${department.name}) · Fee ₹${resolvedFee} (${resolvedStatus})`,
       timestamp: new Date().toISOString(),
       performedBy: patientName
     });
@@ -926,6 +969,46 @@ async function startServer() {
       message: `Token ${tokenNumber} generated successfully!`,
       data: newToken
     });
+  });
+
+  // Payment Verification API (Simulated Gateway Hook)
+  app.post('/api/payments/verify', (req, res) => {
+    const { amount, method, patientName, patientPhone, hospitalId } = req.body;
+    const txnId = `TXN-GOK-${Math.floor(100000 + Math.random() * 900000)}`;
+    res.json({
+      success: true,
+      transactionId: txnId,
+      amount: typeof amount === 'number' ? amount : (Number(amount) || 10),
+      paymentStatus: 'PAID',
+      paymentMethod: method || 'UPI',
+      paidAt: new Date().toISOString(),
+      gateway: 'Karnataka One / NHA e-Hospital PG',
+      message: `Government OPD registration fee of ₹${amount || 10} verified successfully.`
+    });
+  });
+
+  // Pay for an existing unpaid token
+  app.post('/api/tokens/:id/pay', (req, res) => {
+    const token = db.tokens.find(t => t.id === req.params.id || t.tokenNumber === req.params.id);
+    if (!token) {
+      return res.status(404).json({ success: false, message: 'Token not found' });
+    }
+    const { method, fee, transactionId } = req.body;
+    token.paymentStatus = 'PAID';
+    token.paymentMethod = method || 'UPI';
+    token.fee = typeof fee === 'number' ? fee : (token.fee || 10);
+    token.transactionId = transactionId || `TXN-GOK-${Math.floor(100000 + Math.random() * 900000)}`;
+    token.paidAt = new Date().toISOString();
+
+    db.auditLogs.unshift({
+      id: 'log-' + Date.now(),
+      action: 'PAYMENT_RECEIVED',
+      details: `OPD fee ₹${token.fee} paid for token ${token.tokenNumber} via ${token.paymentMethod} (${token.transactionId})`,
+      timestamp: new Date().toISOString(),
+      performedBy: token.patientName
+    });
+
+    res.json({ success: true, message: 'Payment confirmed successfully', data: token });
   });
 
   app.get('/api/tokens/:id', (req, res) => {

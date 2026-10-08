@@ -8,7 +8,8 @@ import {
   FileText,
   AlertCircle,
   CheckCircle2,
-  ArrowRight
+  ArrowRight,
+  Compass
 } from 'lucide-react';
 import { api } from '../services/api.js';
 import { useAuth } from '../context/AuthContext.jsx';
@@ -76,7 +77,14 @@ export default function PatientDashboard() {
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5 flex-wrap">
+          <Link
+            to="/hospital-navigator"
+            className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold text-xs rounded-xl shadow-2xs transition-colors flex items-center gap-1.5"
+          >
+            <Compass className="w-3.5 h-3.5 text-emerald-700" />
+            <span>{language === 'kn' ? 'ಆಸ್ಪತ್ರೆ ನಕ್ಷೆ' : 'Hospital Floor Plan'}</span>
+          </Link>
           <Link
             to="/book-token"
             className="px-5 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white font-semibold text-xs rounded-xl shadow-2xs transition-colors"

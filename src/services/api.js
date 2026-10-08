@@ -64,6 +64,10 @@ export const api = {
   getTokenById: (id) => request(`/tokens/${id}`),
   createToken: (tokenData) => request('/tokens', { method: 'POST', body: JSON.stringify(tokenData) }),
   cancelToken: (id) => request(`/tokens/${id}`, { method: 'DELETE' }),
+  payToken: (id, paymentData) => request(`/tokens/${id}/pay`, { method: 'POST', body: JSON.stringify(paymentData) }),
+
+  // Payments & Treasury
+  verifyPayment: (paymentData) => request('/payments/verify', { method: 'POST', body: JSON.stringify(paymentData) }),
 
   // Live Queue
   getQueue: (hospitalId, departmentId) => request(`/queue/${hospitalId}/${departmentId}`),
@@ -79,3 +83,5 @@ export const api = {
   // Admin
   getAdminAnalytics: () => request('/admin/analytics'),
 };
+
+export default api;

@@ -10,12 +10,17 @@ import {
   Sparkles,
   CheckCircle2,
   AlertCircle,
-  ArrowRight
+  ArrowRight,
+  Compass,
+  Coins,
+  CreditCard,
+  ShieldCheck
 } from 'lucide-react';
 import { api } from '../services/api.js';
 import { useLanguage } from '../context/LanguageContext.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import TokenCard from '../components/TokenCard.jsx';
+import GovtPaymentGatewayModal from '../components/GovtPaymentGatewayModal.jsx';
 
 export default function BookTokenPage() {
   const { t, language } = useLanguage();
@@ -38,10 +43,11 @@ export default function BookTokenPage() {
   const [symptoms, setSymptoms] = useState('');
   const [slot, setSlot] = useState('Morning (09:00 AM - 01:00 PM)');
 
-  // Submission State
+  // Submission & Payment State
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [generatedToken, setGeneratedToken] = useState(null);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -62,7 +68,7 @@ export default function BookTokenPage() {
     }
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     setErrorMsg('');
 
@@ -76,7 +82,15 @@ export default function BookTokenPage() {
       return;
     }
 
+    // Open Government Health OPD Payment Gateway
+    setIsPaymentModalOpen(true);
+  };
+
+  const handlePaymentSuccess = async (paymentDetails) => {
+    setIsPaymentModalOpen(false);
     setIsSubmitting(true);
+    setErrorMsg('');
+
     try {
       const res = await api.createToken({
         patientName: patientName.trim(),
@@ -86,7 +100,12 @@ export default function BookTokenPage() {
         hospitalId: selectedHospitalId,
         departmentId: selectedDeptId,
         slot,
-        symptoms: symptoms.trim() || 'General OPD consultation'
+        symptoms: symptoms.trim() || 'General OPD consultation',
+        fee: paymentDetails.fee,
+        paymentStatus: paymentDetails.paymentStatus,
+        paymentMethod: paymentDetails.paymentMethod,
+        transactionId: paymentDetails.transactionId,
+        paidAt: paymentDetails.paidAt
       });
 
       setGeneratedToken(res.data);
@@ -139,13 +158,23 @@ export default function BookTokenPage() {
 
           <TokenCard token={generatedToken} />
 
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
-            <Link
-              to={`/live-queue?hospitalId=${generatedToken.hospitalId}&deptId=${generatedToken.departmentId}`}
-              className="w-full sm:w-auto px-5 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white font-medium text-xs rounded-lg shadow-sm text-center transition-colors"
-            >
-              Track Live Queue for This Department →
-            </Link>
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2 flex-wrap">
+            <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap">
+              <Link
+                to={`/live-queue?hospitalId=${generatedToken.hospitalId}&deptId=${generatedToken.departmentId}`}
+                className="w-full sm:w-auto px-5 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white font-medium text-xs rounded-lg shadow-sm text-center transition-colors"
+              >
+                Track Live Queue →
+              </Link>
+
+              <Link
+                to={`/hospital-navigator?dept=${generatedToken.departmentId}&token=${encodeURIComponent(generatedToken.tokenNumber)}`}
+                className="w-full sm:w-auto px-4 py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 font-semibold text-xs rounded-lg text-center transition-colors flex items-center justify-center gap-1.5"
+              >
+                <Compass className="w-3.5 h-3.5 text-emerald-700" />
+                <span>{language === 'kn' ? 'ನಕ್ಷೆಯಲ್ಲಿ ಕೊಠಡಿ ನೋಡಿ' : 'Floor Plan & Room'}</span>
+              </Link>
+            </div>
 
             <button
               onClick={() => {
@@ -356,13 +385,36 @@ export default function BookTokenPage() {
                 </label>
               </div>
             </div>
+
+            {/* Government OPD Fee Information Notice */}
+            <div className="bg-emerald-50/70 border border-emerald-200 rounded-xl p-3.5 flex items-start gap-3">
+              <Coins className="w-5 h-5 text-emerald-700 shrink-0 mt-0.5" />
+              <div className="flex-1 text-xs">
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <span className="font-bold text-emerald-950">
+                    {language === 'kn'
+                      ? 'ಸರ್ಕಾರಿ ಒಪಿಡಿ ನೋಂದಣಿ ಶುಲ್ಕ: ₹10 (ಸಾಮಾನ್ಯ) / ₹20 (ವಿಶೇಷ)'
+                      : 'Government OPD Registration Fee: ₹10 (General) / ₹20 (Specialty)'}
+                  </span>
+                  <span className="text-[10px] font-semibold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded border border-emerald-300">
+                    UPI / RuPay / NHA
+                  </span>
+                </div>
+                <p className="text-emerald-800 mt-1 leading-relaxed">
+                  {language === 'kn'
+                    ? 'ಸರ್ಕಾರಿ ಆಸ್ಪತ್ರೆಗಳಲ್ಲಿ ಒಪಿಡಿ ಟೋಕನ್‌ಗೆ ₹10 ಅಥವಾ ₹20 ನಾಮಮಾತ್ರ ಶುಲ್ಕವಿರುತ್ತದೆ. ಯುಪಿಐ ಅಥವಾ ರುಪೇ ಕಾರ್ಡ್ ಮೂಲಕ ಆನ್‌ಲೈನ್‌ನಲ್ಲಿ ಪಾವತಿಸಿ ಆಸ್ಪತ್ರೆಯ ನಗದು ಕೌಂಟರ್ ಕ್ಯೂ ತಪ್ಪಿಸಿ. ಆಯುಷ್ಮಾನ್ ಭಾರತ್ / ಬಿಪಿಎಲ್ ಕಾರ್ಡ್‌ದಾರರಿಗೆ 100% ಉಚಿತ.'
+                    : 'A nominal ₹10 (General) or ₹20 (Specialty) registration fee applies per Health Department norms. Pay online via UPI or RuPay Card to bypass registration queues upon arrival, or claim 100% free exemption with ABHA / PM-JAY.'}
+                </p>
+              </div>
+            </div>
           </div>
 
           {/* Submit Button */}
           <div className="pt-4 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <span className="text-[11px] text-slate-500">
-              Free OPD pass issued under Government of Karnataka healthcare mission.
-            </span>
+            <div className="flex items-center gap-2 text-[11px] text-slate-500">
+              <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+              <span>Official Karnataka Health Treasury Payment Gateway · 256-Bit SSL</span>
+            </div>
 
             <button
               type="submit"
@@ -370,17 +422,39 @@ export default function BookTokenPage() {
               className="px-6 py-3 bg-emerald-700 hover:bg-emerald-800 text-white font-semibold text-xs sm:text-sm rounded-xl transition-all shadow-sm hover:shadow disabled:opacity-50 disabled:cursor-not-allowed shrink-0 flex items-center justify-center gap-2"
             >
               {isSubmitting ? (
-                <span>Generating Digital Token...</span>
+                <span>Processing Digital Token...</span>
               ) : (
                 <>
-                  <Calendar className="w-4 h-4" />
-                  <span>Generate OPD Token</span>
+                  <CreditCard className="w-4 h-4" />
+                  <span>
+                    {language === 'kn'
+                      ? 'ಶುಲ್ಕ ಪಾವತಿಸಿ ಟೋಕನ್ ಪಡೆಯಿರಿ (₹10/₹20)'
+                      : 'Proceed to Pay & Generate Token (₹10/₹20)'}
+                  </span>
                 </>
               )}
             </button>
           </div>
         </form>
       )}
+
+      {/* Government Health OPD Payment Gateway Modal */}
+      <GovtPaymentGatewayModal
+        isOpen={isPaymentModalOpen}
+        onClose={() => setIsPaymentModalOpen(false)}
+        bookingDetails={{
+          patientName: patientName.trim(),
+          patientPhone: patientPhone.trim(),
+          hospitalId: selectedHospitalId,
+          hospitalName: hospitals.find((h) => h.id === selectedHospitalId)?.name || 'Victoria Hospital (BMCRI)',
+          departmentId: selectedDeptId,
+          departmentName: departments.find((d) => d.id === selectedDeptId)?.name || 'General Medicine',
+          departmentCode: departments.find((d) => d.id === selectedDeptId)?.code || 'GM',
+          appointmentDate: new Date().toISOString().split('T')[0],
+          abhaId: abhaId
+        }}
+        onPaymentComplete={handlePaymentSuccess}
+      />
     </div>
   );
 }

@@ -18,6 +18,8 @@ import StaffDashboard from './pages/StaffDashboard.jsx';
 import DoctorDashboard from './pages/DoctorDashboard.jsx';
 import AdminDashboard from './pages/AdminDashboard.jsx';
 import AIAssistantPage from './pages/AIAssistantPage.jsx';
+import SymptomCheckerPage from './pages/SymptomCheckerPage.jsx';
+import HospitalNavigatorPage from './pages/HospitalNavigatorPage.jsx';
 import AboutPage from './pages/AboutPage.jsx';
 import LoginPage from './pages/LoginPage.jsx';
 import RegisterPage from './pages/RegisterPage.jsx';
@@ -38,11 +40,13 @@ export default function App() {
                 <Route path="/departments" element={<DepartmentsPage />} />
                 <Route path="/book-token" element={<BookTokenPage />} />
                 <Route path="/live-queue" element={<LiveQueuePage />} />
+                <Route path="/hospital-navigator" element={<HospitalNavigatorPage />} />
                 <Route path="/patient/dashboard" element={<PatientDashboard />} />
                 <Route path="/staff/dashboard" element={<StaffDashboard />} />
                 <Route path="/doctor/dashboard" element={<DoctorDashboard />} />
                 <Route path="/admin/dashboard" element={<AdminDashboard />} />
                 <Route path="/ai-assistant" element={<AIAssistantPage />} />
+                <Route path="/symptom-checker" element={<SymptomCheckerPage />} />
                 <Route path="/about" element={<AboutPage />} />
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/register" element={<RegisterPage />} />

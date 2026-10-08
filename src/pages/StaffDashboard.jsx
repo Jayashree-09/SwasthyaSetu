@@ -10,11 +10,13 @@ import {
   Clock,
   Radio,
   RefreshCw,
-  Search
+  Search,
+  Download
 } from 'lucide-react';
 import { api } from '../services/api.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useLanguage } from '../context/LanguageContext.jsx';
+import { downloadTokenPDF } from '../services/pdfGenerator.js';
 
 export default function StaffDashboard() {
   const { user } = useAuth();
@@ -277,6 +279,16 @@ export default function StaffDashboard() {
                     </td>
                     <td className="py-3 px-4 text-right">
                       <div className="flex items-center justify-end gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => downloadTokenPDF(tok, language)}
+                          className="px-2 py-1 text-slate-700 bg-slate-100 hover:bg-slate-200 rounded text-[11px] font-medium flex items-center gap-1 transition-colors"
+                          title="Download Patient Token PDF Pass"
+                        >
+                          <Download className="w-3 h-3" />
+                          <span>PDF Pass</span>
+                        </button>
+
                         {tok.status === 'CALLED' && (
                           <button
                             onClick={() => executeAction('START_CONSULT', tok.id)}

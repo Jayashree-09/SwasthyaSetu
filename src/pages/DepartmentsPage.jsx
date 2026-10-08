@@ -5,7 +5,8 @@ import {
   Search,
   ArrowRight,
   Sparkles,
-  AlertCircle
+  AlertCircle,
+  Compass
 } from 'lucide-react';
 import { api } from '../services/api.js';
 import { useLanguage } from '../context/LanguageContext.jsx';
@@ -142,7 +143,13 @@ export default function DepartmentsPage() {
               </div>
 
               <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between">
-                <span className="text-xs text-slate-500">Government Hospital OPD</span>
+                <Link
+                  to={`/hospital-navigator?dept=${dept.id}`}
+                  className="inline-flex items-center gap-1 text-xs font-semibold text-slate-600 hover:text-emerald-700 transition-colors"
+                >
+                  <Compass className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>{language === 'kn' ? 'ನಕ್ಷೆಯಲ್ಲಿ ನೋಡಿ' : 'Floor Plan'}</span>
+                </Link>
                 <Link
                   to={`/book-token?deptId=${dept.id}`}
                   className="inline-flex items-center gap-1 px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white font-medium text-xs rounded-lg transition-colors shadow-2xs"

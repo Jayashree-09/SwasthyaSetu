@@ -10,7 +10,8 @@ import {
   User,
   Stethoscope,
   ShieldCheck,
-  CheckCircle2
+  CheckCircle2,
+  Compass
 } from 'lucide-react';
 import { api } from '../services/api.js';
 import { useLanguage } from '../context/LanguageContext.jsx';
@@ -108,8 +109,15 @@ export default function HospitalDetailPage() {
               Book OPD Token
             </Link>
             <Link
+              to={`/hospital-navigator`}
+              className="px-6 py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 font-semibold text-xs rounded-xl text-center transition-colors flex items-center justify-center gap-1.5"
+            >
+              <Compass className="w-3.5 h-3.5 text-emerald-700" />
+              <span>Floor Plan & Map</span>
+            </Link>
+            <Link
               to={`/live-queue?hospitalId=${hospital.id}`}
-              className="px-6 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold text-xs rounded-xl text-center transition-colors"
+              className="px-6 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold text-xs rounded-xl text-center transition-colors"
             >
               Check Live Queue
             </Link>

@@ -25,7 +25,7 @@ class HomePageModel {
     this.bookTokenBtn = page.locator('text=Get OPD Token');
     this.trackQueueBtn = page.locator('text=Track Live Queue');
     this.aiAssistantBtn = page.locator('text=AI Health Guide');
-    this.languageToggle = page.locator('button:has-text("ಕನ್ನಡ")');
+    this.languageToggle = page.locator('button:has-text("ಕನ್ನಡ")').first();
   }
 
   async goto() {
@@ -75,7 +75,7 @@ test.describe('SwasthyaSetu Portal Automation Suite', () => {
     await expect(page.locator('text=ಆಸ್ಪತ್ರೆ ಹುಡುಕಿ').first()).toBeVisible();
 
     // Toggle back to English
-    await page.locator('button:has-text("English")').click();
+    await page.locator('button:has-text("English")').first().click();
     await expect(page.locator('text=Find a Hospital').first()).toBeVisible();
   });
 
@@ -116,13 +116,13 @@ test.describe('SwasthyaSetu Portal Automation Suite', () => {
   test('06. AI Health Assistant recommends Orthopedics for joint and walking difficulty', async ({ page }) => {
     await page.goto('/ai-assistant');
 
-    // Enter symptom into triage tool
-    await page.fill('textarea[placeholder*="Severe knee pain"]', 'Severe joint pain in knees and difficulty walking');
-    await page.click('button:has-text("Recommend OPD Department")');
+    // Enter symptom into chat triage interface
+    await page.fill('input[placeholder*="knee"]', 'Severe joint pain in knees and difficulty walking');
+    await page.click('button[aria-label="Send symptom description"]');
 
     // Validate structured recommendation and safety disclaimer
     await expect(page.locator('text=Orthopedics')).toBeVisible();
-    await expect(page.locator('text=Administrative recommendation')).toBeVisible();
+    await expect(page.locator('text=Administrative recommendation').first()).toBeVisible();
   });
 
   test('07. Staff Dashboard enables queue progression and walk-in issuance', async ({ page }) => {

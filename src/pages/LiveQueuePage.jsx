@@ -13,11 +13,13 @@ import {
 } from 'lucide-react';
 import { api } from '../services/api.js';
 import { useLanguage } from '../context/LanguageContext.jsx';
+import LiveQueueTracker from '../components/LiveQueueTracker.jsx';
 
 export default function LiveQueuePage() {
   const { t, language } = useLanguage();
   const [searchParams] = useSearchParams();
 
+  const [viewMode, setViewMode] = useState('all'); // 'all' departments overview or 'single' department deep-dive
   const [hospitals, setHospitals] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [selectedHospitalId, setSelectedHospitalId] = useState(
@@ -148,42 +150,76 @@ export default function LiveQueuePage() {
         </div>
       </div>
 
-      {/* Hospital & Department Selectors */}
-      <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-2xs grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
-          <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-            Select Hospital
-          </label>
-          <select
-            value={selectedHospitalId}
-            onChange={(e) => setSelectedHospitalId(e.target.value)}
-            className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:bg-white focus:outline-hidden"
+      {/* View Mode Toggle: All Departments vs Single Room Deep-Dive */}
+      <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setViewMode('all')}
+            className={`px-4 py-2 text-xs font-bold rounded-xl transition-all ${
+              viewMode === 'all'
+                ? 'bg-emerald-700 text-white shadow-xs'
+                : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200'
+            }`}
           >
-            {hospitals.map((h) => (
-              <option key={h.id} value={h.id}>
-                {h.name} ({h.district})
-              </option>
-            ))}
-          </select>
+            {language === 'kn' ? 'ಎಲ್ಲಾ ವಿಭಾಗಗಳ ಲೈವ್ ಸ್ಥಿತಿ (All Departments)' : 'All Departments Live Overview'}
+          </button>
+          <button
+            onClick={() => setViewMode('single')}
+            className={`px-4 py-2 text-xs font-bold rounded-xl transition-all ${
+              viewMode === 'single'
+                ? 'bg-emerald-700 text-white shadow-xs'
+                : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200'
+            }`}
+          >
+            {language === 'kn' ? 'ನಿರ್ದಿಷ್ಟ ವಿಭಾಗದ ವಿವರ (Single OPD Room)' : 'Department Room Detail'}
+          </button>
         </div>
 
-        <div>
-          <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-            OPD Department
-          </label>
-          <select
-            value={selectedDeptId}
-            onChange={(e) => setSelectedDeptId(e.target.value)}
-            className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:bg-white focus:outline-hidden"
-          >
-            {departments.map((d) => (
-              <option key={d.id} value={d.id}>
-                {d.name} ({d.code})
-              </option>
-            ))}
-          </select>
-        </div>
+        <span className="text-[11px] text-slate-500 hidden sm:inline">
+          {language === 'kn' ? 'ಪ್ರತಿ 5 ಸೆಕೆಂಡಿಗೆ ಸ್ವಯಂಚಾಲಿತವಾಗಿ ನವೀಕರಣಗೊಳ್ಳುತ್ತದೆ' : 'Auto-updates every 5 seconds'}
+        </span>
       </div>
+
+      {viewMode === 'all' ? (
+        <LiveQueueTracker defaultHospitalId={selectedHospitalId} showHeader={false} />
+      ) : (
+        <>
+          {/* Hospital & Department Selectors */}
+          <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-2xs grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                Select Hospital
+              </label>
+              <select
+                value={selectedHospitalId}
+                onChange={(e) => setSelectedHospitalId(e.target.value)}
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:bg-white focus:outline-hidden"
+              >
+                {hospitals.map((h) => (
+                  <option key={h.id} value={h.id}>
+                    {h.name} ({h.district})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                OPD Department
+              </label>
+              <select
+                value={selectedDeptId}
+                onChange={(e) => setSelectedDeptId(e.target.value)}
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:bg-white focus:outline-hidden"
+              >
+                {departments.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.name} ({d.code})
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
 
       {/* Big Digital Display Board */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -400,6 +436,8 @@ export default function LiveQueuePage() {
           </div>
         )}
       </div>
+      </>
+      )}
     </div>
   );
 }
